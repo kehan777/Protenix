@@ -1,0 +1,25 @@
+
+#https://blog.csdn.net/qq_40709110/article/details/104740600
+#https://hub.docker.com/
+https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#configuring-docker
+sudo tee /etc/docker/daemon.json <<-'EOF'
+{
+    "registry-mirrors": [
+        "https://docker.m.daocloud.io",
+        "https://huecker.io",
+        "https://dockerhub.timeweb.cloud",
+        "https://registry-1.abcio.xyz",
+        "https://noohub.ru"
+    ],
+    "runtimes": {
+        "nvidia": {
+            "args": [],
+            "path": "nvidia-container-runtime"
+        }
+    }
+}
+EOF
+
+sudo docker pull nvidia/cuda:12.2.2-base-ubuntu22.04
+sudo docker run --rm --gpus all nvidia/cuda:12.2.2-base-ubuntu22.04 nvidia-smi
+sudo docker pull ai4s-cn-beijing.cr.volces.com/infra/protenix:v0.0.1
