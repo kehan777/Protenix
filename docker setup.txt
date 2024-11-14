@@ -32,5 +32,8 @@ dfold3
 如果您想在容器中访问宿主机的 /mnt/d/ 目录，您需要在运行容器时使用 -v 或 --mount 选项来挂载卷。例如：
 
 bash
-sudo docker run -it -v /mnt/d:/mnt/d --name my_container d15d5979d92b /bin/bash
+sudo docker run -it -v /mnt/d:/mnt/d --name dfold3 d15d5979d92b /bin/bash
 这里，-v /mnt/d:/mnt/d 表示将宿主机的 /mnt/d/ 目录挂载到容器的 /mnt/d/ 目录
+docker run --gpus all -it -v $(pwd):/workspace -v /dev/shm:/dev/shm ai4s-cn-beijing.cr.volces.com/infra/protenix:v0.0.1 /bin/bash
+
+sudo docker run --gpus all -it -v $(pwd):/workspace  -v /mnt/d:/mnt/d --name dfold3 d15d5979d92b /bin/bash
