@@ -37,3 +37,15 @@ sudo docker run -it -v /mnt/d:/mnt/d --name dfold3 d15d5979d92b /bin/bash
 docker run --gpus all -it -v $(pwd):/workspace -v /dev/shm:/dev/shm ai4s-cn-beijing.cr.volces.com/infra/protenix:v0.0.1 /bin/bash
 
 sudo docker run --gpus all -it -v $(pwd):/workspace  -v /mnt/d:/mnt/d --name dfold3 d15d5979d92b /bin/bash
+
+再次打开时，可以直接
+(base) adsb@DSb:~$ sudo docker start dfold3
+dfold3
+(base) adsb@DSb:~$ sudo docker exec -it dfold3 /bin/bash
+
+sudo docker stop dfold3
+删除容器：
+一旦容器停止，你可以使用以下命令来删除它：
+sudo docker rm dfold3
+
+sudo docker run --gpus all -it -v $(pwd):/workspace -v /mnt:/mnt --name dfold3 d15d5979d92b /bin/bash
