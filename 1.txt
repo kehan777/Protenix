@@ -1,0 +1,24 @@
+conda activate protenix
+sudo apt-get update
+sudo apt-get install git git-lfs expect zsh vim wget curl unzip zip cmake cmake-curses-gui libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev
+sudo apt-get install libc6-dev zlib1g zlib1g-dev
+sudo apt-get clean
+sudo apt update && apt -y install postgresql
+sudo apt install postgresql
+cd /mnt/d/conda/Protenix
+git clone --branch v3.3.0 https://github.com/soedinglab/hh-suite.git
+sudo apt install hmmer cmake cmake-curses-gui
+cd hh-suite
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=/opt/hhsuite ..
+sudo mkdir -p /opt/hhsuite
+sudo mkdir -p /opt/hhsuite/bin
+sudo chmod -R 777 /opt/hhsuite
+make -j 32 && make install
+sudo ln -s /opt/hhsuite/bin/* /usr/bin
+sudo apt-get install libxrender1 iproute2 curl libxext6
+
+pip3 install scipy ml_collections tqdm pandas dm-tree==0.1.6 rdkit=="2023.03.01" biopython==1.83 modelcif==0.7 
+# Add datapipeline dependency
+pip3 install biotite==1.0.1 gemmi==0.6.5 pdbeccdutils==0.8.5 scikit-learn==1.2.2 scikit-learn-extra deepspeed==0.14.4 protobuf==3.20.2 tos icecream ipdb wandb numpy==1.26.3 matplotlib==3.9.2 ipywidgets py3Dmol
