@@ -5,6 +5,8 @@ sudo apt-get install libc6-dev zlib1g zlib1g-dev
 sudo apt-get clean
 sudo apt update && apt -y install postgresql
 sudo apt install postgresql
+sudo git clone -b v3.5.1 https://github.com/NVIDIA/cutlass.git  /opt/cutlass
+export CUTLASS_PATH=/opt/cutlass
 cd /mnt/d/conda/Protenix
 git clone --branch v3.3.0 https://github.com/soedinglab/hh-suite.git
 sudo apt install hmmer cmake cmake-curses-gui
