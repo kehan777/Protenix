@@ -37,6 +37,7 @@ sudo docker run -it -v /mnt/d:/mnt/d --name dfold3 d15d5979d92b /bin/bash
 docker run --gpus all -it -v $(pwd):/workspace -v /dev/shm:/dev/shm ai4s-cn-beijing.cr.volces.com/infra/protenix:v0.0.1 /bin/bash
 
 sudo docker run --gpus all -it -v $(pwd):/workspace  -v /mnt/d:/mnt/d --name dfold3 d15d5979d92b /bin/bash
+sudo docker run --gpus all -it -v $(pwd):/workspace  -v /mnt:/mnt --name dfold3 d15d5979d92b /bin/bash
 
 再次打开时，可以直接
 (base) adsb@DSb:~$ sudo docker start dfold3
