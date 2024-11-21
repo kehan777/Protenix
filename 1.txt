@@ -25,3 +25,9 @@ sudo apt-get install libxrender1 iproute2 curl libxext6
 pip3 install scipy ml_collections tqdm pandas dm-tree==0.1.6 rdkit=="2023.03.01" biopython==1.83 modelcif==0.7 
 # Add datapipeline dependency
 pip3 install biotite==1.0.1 gemmi==0.6.5 pdbeccdutils==0.8.5 scikit-learn==1.2.2 scikit-learn-extra deepspeed==0.14.4 protobuf==3.20.2 tos icecream ipdb wandb numpy==1.26.3 matplotlib==3.9.2 ipywidgets py3Dmol
+
+
+#msa
+https://neurosnap.ai/blog/post/6711802c8bedccdda9e14fe4
+https://github.com/NeurosnapInc/neurosnap/blob/main/src/neurosnap/msa.py
+https://colab.research.google.com/github/sokrypton/ColabFold/blob/v1.5.5/AlphaFold2.ipynb#scrollTo=C2_sh2uAonJH
