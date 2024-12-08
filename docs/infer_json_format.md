@@ -246,6 +246,3 @@ The contents of each output file are as follows:
     - `disorder` - Predicted regions of intrinsic disorder within the protein, highlighting residues that may be flexible or unstructured.
     - `ranking_score` - Predicted confidence score for ranking complexes. Higher values indicate greater confidence.
     - `num_recycles`: Number of recycling steps used during inference.
-
-
-
