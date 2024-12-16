@@ -1,12 +1,11 @@
 # Copyright 2024 ByteDance and/or its affiliates.
 #
-# Licensed under the Attribution-NonCommercial 4.0 International
-# License (the "License"); you may not use this file except in
-# compliance with the License. You may obtain a copy of the
-# License at
-
-#     https://creativecommons.org/licenses/by-nc/4.0/
-
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -118,7 +117,7 @@ model_configs = {
     },
     "infer_setting": {
         "chunk_size": ValueMaybeNone(
-            256
+            64
         ),  # should set to null for normal training and small dataset eval [for efficiency]
         "sample_diffusion_chunk_size": ValueMaybeNone(
             1
@@ -228,8 +227,8 @@ model_configs = {
             "max_atoms_per_token": GlobalConfigValue("max_atoms_per_token"),
             "pairformer_dropout": 0.0,
             "blocks_per_ckpt": GlobalConfigValue("blocks_per_ckpt"),
-            "distance_bin_start": 3.375,
-            "distance_bin_end": 21.375,
+            "distance_bin_start": 3.25,
+            "distance_bin_end": 52.0,
             "distance_bin_step": 1.25,
             "stop_gradient": True,
         },
@@ -289,8 +288,9 @@ loss_configs = {
         },
         "plddt": {
             "min_bin": 0,
-            "max_bin": 100,
+            "max_bin": 1.0,
             "no_bins": 50,
+            "normalize": True,
             "eps": 1e-6,
         },
         "pde": {

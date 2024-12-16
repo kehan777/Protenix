@@ -1,12 +1,11 @@
 # Copyright 2024 ByteDance and/or its affiliates.
 #
-# Licensed under the Attribution-NonCommercial 4.0 International
-# License (the "License"); you may not use this file except in
-# compliance with the License. You may obtain a copy of the
-# License at
-
-#     https://creativecommons.org/licenses/by-nc/4.0/
-
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -163,22 +162,23 @@ def flatten_final_dims(t: torch.Tensor, num_dims: int) -> torch.Tensor:
     return t.reshape(shape=t.shape[:-num_dims] + (-1,))
 
 
-def one_hot(x: torch.Tensor, v_bins: torch.Tensor) -> torch.Tensor:
-    """Get one hot embedding of x from v_bins
-
+def one_hot(
+    x: torch.Tensor, lower_bins: torch.Tensor, upper_bins: torch.Tensor
+) -> torch.Tensor:
+    """Get one hot embedding of x from lower_bins and upper_bins
     Args:
         x (torch.Tensor): the input x
             [...]
-        v_bins (torch.Tensor): the bin
+        lower_bins (torch.Tensor): the lower bounds of bins
+            [bins]
+        upper_bins (torch.Tensor): the upper bounds of bins
             [bins]
     Returns:
         torch.Tensor: the one hot embedding of x from v_bins
             [..., bins]
     """
-    reshaped_bins = v_bins.view(((1,) * len(x.shape)) + (len(v_bins),))
-    diffs = x[..., None] - reshaped_bins
-    am = torch.argmin(torch.abs(diffs), dim=-1)
-    return nn.functional.one_hot(am, num_classes=len(v_bins)).float()
+    dgram = (x[..., None] > lower_bins) * (x[..., None] < upper_bins).float()
+    return dgram
 
 
 # this is mostly from openfold.utils.torch_utils import batched_gather

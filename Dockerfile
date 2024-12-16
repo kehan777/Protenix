@@ -26,15 +26,15 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
     && cd - \
     && rm -rf /tmp/hh-suite
 
-RUN apt-get install -yq --no-install-recommends libxrender1 iproute2 curl libxext6
+RUN apt-get install -yq --no-install-recommends iproute2 curl
 # Add PIP Package
 RUN pip3 --no-cache-dir install \
     scipy \
     ml_collections \
     tqdm \
     pandas \
-    dm-tree==0.1.6 \
-    rdkit=="2023.03.01" 
+    dm-tree \
+    rdkit
 
 # Add openfold dependency
 RUN pip3 --no-cache-dir install \
@@ -44,9 +44,7 @@ RUN pip3 --no-cache-dir install \
 # Add datapipeline dependency
 RUN pip3 --no-cache-dir install \
     biotite==1.0.1 \
-    gemmi==0.6.5 \
-    pdbeccdutils==0.8.5 \
-    scikit-learn==1.2.2 \
+    scikit-learn \
     scikit-learn-extra \
     deepspeed==0.14.4 \
     protobuf==3.20.2 tos icecream ipdb wandb numpy==1.26.3 matplotlib==3.9.2 ipywidgets py3Dmol

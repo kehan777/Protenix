@@ -1,12 +1,11 @@
 # Copyright 2024 ByteDance and/or its affiliates.
 #
-# Licensed under the Attribution-NonCommercial 4.0 International
-# License (the "License"); you may not use this file except in
-# compliance with the License. You may obtain a copy of the
-# License at
-
-#     https://creativecommons.org/licenses/by-nc/4.0/
-
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,12 +21,12 @@ from copy import deepcopy
 from os.path import exists as opexists
 from os.path import join as opjoin
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Sequence, Tuple, Union
+from typing import Any, Dict, List, Mapping, Sequence, Tuple
 
 import numpy as np
-import requests
 
 import protenix.data.ccd as ccd
+import requests
 from protenix.data.json_to_feature import SampleDictToFeatures
 from protenix.web_service.colab_request_utils import run_mmseqs2_service
 from protenix.web_service.dependency_url import URL
@@ -119,28 +118,6 @@ class RequestParser(object):
             raise ValueError("Failed in finding model checkpoint.")
 
     def get_data_json(self) -> str:
-        def reformat_modification(
-            modifications: Sequence[Dict[str, Union[str, int]]], seq_type: str
-        ) -> Sequence[Dict[str, Union[str, int]]]:
-            if seq_type == "proteinChain":
-                return [
-                    {
-                        "ptmType": mod["modificationType"],
-                        "ptmPosition": mod["position"],
-                    }
-                    for mod in modifications
-                ]
-            elif seq_type in ["dnaSequence", "rnaSequence"]:
-                return [
-                    {
-                        "modificationType": mod["modificationType"],
-                        "basePosition": mod["position"],
-                    }
-                    for mod in modifications
-                ]
-            else:
-                raise NotImplementedError
-
         input_json_dict = {
             "name": (self.request["name"]),
             "covalent_bonds": self.request["covalent_bonds"],
@@ -156,26 +133,19 @@ class RequestParser(object):
 
             seq_type, seq_info = next(iter(entity_info_wrapper.items()))
 
-            new_seq_info = {}
             if seq_type == "proteinChain":
                 if self.request["use_msa"]:
                     entity_pending_msa[entity_id] = seq_info["sequence"]
-                new_seq_info["count"] = seq_info["count"]
-                new_seq_info["sequence"] = seq_info["sequence"]
-                new_seq_info["modifications"] = reformat_modification(
-                    seq_info["modifications"], seq_type=seq_type
-                )
-            elif seq_type in ["dnaSequence", "rnaSequence"]:
-                new_seq_info["count"] = seq_info["count"]
-                new_seq_info["sequence"] = seq_info["sequence"]
-                new_seq_info["modifications"] = reformat_modification(
-                    seq_info["modifications"], seq_type=seq_type
-                )
-            elif seq_type in ["ligand", "ion"]:
-                new_seq_info.update(seq_info)
-            else:
+
+            if seq_type not in [
+                "proteinChain",
+                "dnaSequence",
+                "rnaSequence",
+                "ligand",
+                "ion",
+            ]:
                 raise NotImplementedError
-            sequences.append({seq_type: new_seq_info})
+            sequences.append({seq_type: seq_info})
 
         tmp_json_dict = deepcopy(input_json_dict)
         tmp_json_dict["sequences"] = sequences

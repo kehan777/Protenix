@@ -1,15 +1,16 @@
 ### Run with Docker
 
 1. Install Docker (with GPU Support)
-Ensure that Docker is installed and configured with GPU support. Follow these steps:
-    -  Install [Docker](https://www.docker.com/) if not already installed.
+
+    Ensure that Docker is installed and configured with GPU support. Follow these steps:
+    *  Install [Docker](https://www.docker.com/) if not already installed.
     *  Install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) to enable GPU support.
     *  Verify the setup with:
         ```bash
         docker run --rm --gpus all nvidia/cuda:12.1.0-base-ubuntu22.04 nvidia-smi
         ```
         
-2. Pull the Docker image, which was built based on this [Dockerfile](Dockerfile)
+2. Pull the Docker image, which was built based on this [Dockerfile](../Dockerfile)
     ```bash
     docker pull ai4s-cn-beijing.cr.volces.com/infra/protenix:v0.0.1
     ```

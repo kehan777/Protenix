@@ -1,12 +1,11 @@
 # Copyright 2024 ByteDance and/or its affiliates.
 #
-# Licensed under the Attribution-NonCommercial 4.0 International
-# License (the "License"); you may not use this file except in
-# compliance with the License. You may obtain a copy of the
-# License at
-
-#     https://creativecommons.org/licenses/by-nc/4.0/
-
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +13,7 @@
 # limitations under the License.
 
 export LAYERNORM_TYPE=fast_layernorm
-
+export USE_DEEPSPEED_EVO_ATTTENTION=true
 
 python3 ./runner/train.py \
 --run_name protenix_train \
@@ -22,7 +21,6 @@ python3 ./runner/train.py \
 --base_dir ./output \
 --dtype bf16 \
 --project protenix \
---use_deepspeed_evo_attention true \
 --use_wandb false \
 --diffusion_batch_size 48 \
 --eval_interval 400 \

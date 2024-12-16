@@ -1,12 +1,11 @@
 # Copyright 2024 ByteDance and/or its affiliates.
 #
-# Licensed under the Attribution-NonCommercial 4.0 International
-# License (the "License"); you may not use this file except in
-# compliance with the License. You may obtain a copy of the
-# License at
-
-#     https://creativecommons.org/licenses/by-nc/4.0/
-
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1182,11 +1181,12 @@ class PLDDTLoss(nn.Module):
     def __init__(
         self,
         min_bin: float = 0,
-        max_bin: float = 100,
+        max_bin: float = 1,
         no_bins: int = 50,
         is_nucleotide_threshold: float = 30.0,
         is_not_nucleotide_threshold: float = 15.0,
         eps: float = 1e-6,
+        normalize: bool = True,
         reduction: str = "mean",
     ) -> None:
         """PLDDT loss
@@ -1202,6 +1202,7 @@ class PLDDTLoss(nn.Module):
             reduction (str, optional): reduction method for the batch dims. Defaults to mean.
         """
         super(PLDDTLoss, self).__init__()
+        self.normalize = normalize
         self.min_bin = min_bin
         self.max_bin = max_bin
         self.no_bins = no_bins
@@ -1283,7 +1284,11 @@ class PLDDTLoss(nn.Module):
         per_atom_lddt = torch.sum(
             lddt_lm * pair_mask, dim=-1, keepdim=True
         )  # [...,  N_sample, N_atom, 1]
-
+        if self.normalize:
+            per_atom_lddt = per_atom_lddt / (
+                torch.sum(pair_mask.to(dtype=per_atom_lddt.dtype), dim=-1, keepdim=True)
+                + self.eps
+            )
         # Distribute into bins
         boundaries = torch.linspace(
             start=self.min_bin,

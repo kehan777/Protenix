@@ -1,12 +1,11 @@
 # Copyright 2024 ByteDance and/or its affiliates.
 #
-# Licensed under the Attribution-NonCommercial 4.0 International
-# License (the "License"); you may not use this file except in
-# compliance with the License. You may obtain a copy of the
-# License at
-
-#     https://creativecommons.org/licenses/by-nc/4.0/
-
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,6 +76,7 @@ class DataDumper:
             pdb_id=pdb_id,
             atom_array=atom_array,
             entity_poly_type=entity_poly_type,
+            seed=seed,
         )
 
     def _get_dump_dir(self, dataset_name: str, sample_name: str, seed: int) -> str:
@@ -95,6 +95,7 @@ class DataDumper:
         pdb_id: str,
         atom_array: AtomArray,
         entity_poly_type: dict[str, str],
+        seed: int,
     ):
         """
         Dump raw predictions from the model:
@@ -110,12 +111,14 @@ class DataDumper:
             sample_name=pdb_id,
             atom_array=atom_array,
             entity_poly_type=entity_poly_type,
+            seed=seed,
         )
         # Dump confidence
         self._save_confidence(
             data=pred_dict,
             prediction_save_dir=prediction_save_dir,
             sample_name=pdb_id,
+            seed=seed,
         )
 
     def _save_structure(
@@ -125,12 +128,13 @@ class DataDumper:
         sample_name: str,
         atom_array: AtomArray,
         entity_poly_type: dict[str, str],
+        seed: int,
     ):
         assert atom_array is not None
         N_sample = pred_coordinates.shape[0]
         for idx in range(N_sample):
             output_fpath = os.path.join(
-                prediction_save_dir, f"{sample_name}_sample_{idx}.cif"
+                prediction_save_dir, f"{sample_name}_seed_{seed}_sample_{idx}.cif"
             )
             save_structure_cif(
                 atom_array=atom_array,
@@ -145,6 +149,7 @@ class DataDumper:
         data: dict,
         prediction_save_dir: str,
         sample_name: str,
+        seed: int,
         sorted_by_ranking_score: bool = True,
     ):
         N_sample = len(data["summary_confidence"])
@@ -164,7 +169,7 @@ class DataDumper:
         for rank, idx in enumerate(sorted_indices):
             output_fpath = os.path.join(
                 prediction_save_dir,
-                f"{sample_name}_summary_confidence_sample_{rank}.json",
+                f"{sample_name}_seed_{seed}_summary_confidence_sample_{rank}.json",
             )
             save_json(data["summary_confidence"][idx], output_fpath, indent=4)
             if self.need_atom_confidence:

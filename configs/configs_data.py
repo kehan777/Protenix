@@ -1,12 +1,11 @@
 # Copyright 2024 ByteDance and/or its affiliates.
 #
-# Licensed under the Attribution-NonCommercial 4.0 International
-# License (the "License"); you may not use this file except in
-# compliance with the License. You may obtain a copy of the
-# License at
-
-#     https://creativecommons.org/licenses/by-nc/4.0/
-
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,6 +61,35 @@ default_weighted_pdb_configs = {
 }
 
 DATA_ROOT_DIR = "/af3-dev/release_data/"
+CCD_COMPONENTS_FILE_PATH = os.path.join(DATA_ROOT_DIR, "components.v20240608.cif")
+CCD_COMPONENTS_RDKIT_MOL_FILE_PATH = os.path.join(
+    DATA_ROOT_DIR, "components.v20240608.cif.rdkit_mol.pkl"
+)
+
+# This is a patch in inference stage for users that do not have root permission.
+# If you run
+# ```
+# bash inference_demo.sh
+# ```
+# or
+# ```
+# protenix predict --input examples/example.json --out_dir  ./output
+# ````
+# The checkpoint and the data cache will be downloaded to the current code directory.
+if (not os.path.exists(CCD_COMPONENTS_FILE_PATH)) or (
+    not os.path.exists(CCD_COMPONENTS_RDKIT_MOL_FILE_PATH)
+):
+    print("Try to find the ccd cache data in the code directory for inference.")
+    current_file_path = os.path.abspath(__file__)
+    current_directory = os.path.dirname(current_file_path)
+    code_directory = os.path.dirname(current_directory)
+
+    data_cache_dir = os.path.join(code_directory, "release_data/ccd_cache")
+    CCD_COMPONENTS_FILE_PATH = os.path.join(data_cache_dir, "components.v20240608.cif")
+    CCD_COMPONENTS_RDKIT_MOL_FILE_PATH = os.path.join(
+        data_cache_dir, "components.v20240608.cif.rdkit_mol.pkl"
+    )
+
 
 data_configs = {
     "num_dl_workers": 16,
@@ -162,8 +190,6 @@ data_configs = {
     "template": {
         "enable": False,
     },
-    "ccd_components_file": os.path.join(DATA_ROOT_DIR, "components.v20240608.cif"),
-    "ccd_components_rdkit_mol_file": os.path.join(
-        DATA_ROOT_DIR, "components.v20240608.cif.rdkit_mol.pkl"
-    ),
+    "ccd_components_file": CCD_COMPONENTS_FILE_PATH,
+    "ccd_components_rdkit_mol_file": CCD_COMPONENTS_RDKIT_MOL_FILE_PATH,
 }

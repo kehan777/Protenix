@@ -1,12 +1,11 @@
 # Copyright 2024 ByteDance and/or its affiliates.
 #
-# Licensed under the Attribution-NonCommercial 4.0 International
-# License (the "License"); you may not use this file except in
-# compliance with the License. You may obtain a copy of the
-# License at
-
-#     https://creativecommons.org/licenses/by-nc/4.0/
-
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +14,6 @@
 
 import functools
 import logging
-import multiprocessing
 import pickle
 from collections import defaultdict
 from pathlib import Path
@@ -24,12 +22,8 @@ from typing import Any, Optional, Union
 import biotite
 import biotite.structure as struc
 import biotite.structure.io.pdbx as pdbx
-import gemmi
 import numpy as np
-import rdkit
-import tqdm
 from biotite.structure import AtomArray
-from pdbeccdutils.core import ccd_reader
 from rdkit import Chem
 
 from configs.configs_data import data_configs
@@ -49,16 +43,6 @@ def biotite_load_ccd_cif() -> pdbx.CIFFile:
         pdbx.CIFFile: ccd components file
     """
     return pdbx.CIFFile.read(COMPONENTS_FILE)
-
-
-@functools.lru_cache
-def gemmi_load_ccd_cif() -> gemmi.cif.Document:
-    """gemmi load CCD components file
-
-    Returns:
-        Document: gemmi ccd components file
-    """
-    return gemmi.cif.read(COMPONENTS_FILE)
 
 
 def _map_central_to_leaving_groups(component) -> Optional[dict[str, list[list[str]]]]:
@@ -224,105 +208,11 @@ def get_component_rdkit_mol(ccd_code: str) -> Union[Chem.Mol, None]:
         with open(rdkit_mol_pkl, "rb") as f:
             _ccd_rdkit_mols = pickle.load(f)
         return _ccd_rdkit_mols.get(ccd_code, None)
-
-    # Preprocess all ccd components in _components_file at first time run.
-    print("first time to run get_component_rdkit_mol().")
-    print("preprocessing all ccd components in file:" f"{COMPONENTS_FILE}")
-    print("pre-load cif file before multiprocessing avoid read file at each process.")
-    gemmi_load_ccd_cif()
-
-    mols = {}
-    ccd_codes = get_all_ccd_code()
-    cpu_count = multiprocessing.cpu_count() - 1
-    with multiprocessing.Pool(cpu_count) as pool:
-        for mol in tqdm.tqdm(
-            pool.imap_unordered(_get_component_rdkit_mol_processing, ccd_codes),
-            smoothing=0,
-            total=len(ccd_codes),
-        ):
-            if mol is None:
-                continue
-            mols[mol.name] = mol
-    # Success rate
-    n_ccd = len(ccd_codes)
-    print(f"success rate: {len(mols)/n_ccd:.2%} ({len(mols)}/{n_ccd})")
-
-    # Sanitized rate
-    sanitized_num = sum([mol.sanitized for mol in mols.values()])
-    print(f"sanitized rate: {sanitized_num/n_ccd:.2%} ({sanitized_num}/{n_ccd})")
-
-    # Rdkit conf rate
-    rdkit_conf_num = sum([mol.ref_conf_type == "rdkit" for mol in mols.values()])
-    print(f"rdkit conf rate: {rdkit_conf_num/n_ccd:.2%} ({rdkit_conf_num}/{n_ccd})")
-
-    with open(rdkit_mol_pkl, "wb") as f:
-        pickle.dump(mols, f)
-    print(f"save rdkit mol to {rdkit_mol_pkl}")
-
-    _ccd_rdkit_mols = mols
-    return _ccd_rdkit_mols.get(ccd_code, None)
-
-
-def _get_component_rdkit_mol_processing(ccd_code: str) -> Union[Chem.Mol, None]:
-    """get rdkit mol by PDBeCCDUtils
-    https://github.com/PDBeurope/ccdutils
-
-    Args:
-        ccd_code (str): ccd code
-
-    Returns
-        rdkit.Chem.Mol: rdkit mol with ref coord
-    """
-    ccd_cif = gemmi_load_ccd_cif()
-    try:
-        ccd_block = ccd_cif[ccd_code]
-    except KeyError:
-        return None
-    ccd_reader_result = ccd_reader._parse_pdb_mmcif(ccd_block, sanitize=True)
-    mol = ccd_reader_result.component.mol
-
-    # Atom name from ccd, reading by pdbeccdutils
-    # Copy atom name for pickle https://github.com/rdkit/rdkit/issues/2470
-    mol.atom_map = {atom.GetProp("name"): atom.GetIdx() for atom in mol.GetAtoms()}
-
-    mol.name = ccd_code
-    mol.sanitized = ccd_reader_result.sanitized
-    # First conf is ideal conf.
-    mol.ref_conf_id = 0
-    mol.ref_conf_type = "idea"
-
-    num_atom = mol.GetNumAtoms()
-    # Eg: UNL without atom
-    if num_atom == 0:
-        return mol
-
-    # Make ref_mask, ref_mask is True if ideal coord is valid
-    atoms = ccd_block.find(
-        "_chem_comp_atom.", ["atom_id", "model_Cartn_x", "pdbx_model_Cartn_x_ideal"]
-    )
-    assert num_atom == len(atoms)
-    ref_mask = np.zeros(num_atom, dtype=bool)
-    for row in atoms:
-        atom_id = gemmi.cif.as_string(row["_chem_comp_atom.atom_id"])
-        atom_idx = mol.atom_map[atom_id]
-        x_ideal = row["_chem_comp_atom.pdbx_model_Cartn_x_ideal"]
-        ref_mask[atom_idx] = x_ideal != "?"
-    mol.ref_mask = ref_mask
-
-    if mol.sanitized == False:
-        return mol
-    options = rdkit.Chem.AllChem.ETKDGv3()
-    options.clearConfs = False
-    try:
-        conf_id = rdkit.Chem.AllChem.EmbedMolecule(mol, options)
-        mol.ref_conf_id = conf_id
-        mol.ref_conf_type = "rdkit"
-        mol.ref_mask[:] = True
-    except ValueError:
-        # Sanitization issue here
-        logger.warning(f"Warning: fail to generate conf for {ccd_code}, use idea conf")
-        pass
-    return mol
+    else:
+        raise FileNotFoundError(
+            f"CCD components file {rdkit_mol_pkl} not found, please download it to your DATA_ROOT_DIR before running."
+            "See https://github.com/bytedance/Protenix"
+        )
 
 
 @functools.lru_cache
@@ -478,3 +368,83 @@ def _connect_inter_residue(
         )
 
     return struc.BondList(atoms.array_length(), np.array(bonds, dtype=np.uint32))
+
+
+def add_inter_residue_bonds(
+    atom_array: AtomArray,
+    exclude_struct_conn_pairs: bool = False,
+    remove_far_inter_chain_pairs: bool = False,
+) -> AtomArray:
+    """
+    add polymer bonds (C-N or O3'-P) between adjacent residues based on auth_seq_id.
+
+    exclude_struct_conn_pairs: if True, do not add bond between adjacent residues already has non-standard polymer bonds
+                  on atom C or N or O3' or P.
+
+    remove_far_inter_chain_pairs: if True, remove inter chain (based on label_asym_id) bonds that are far away from each other.
+
+    returns:
+        AtomArray: Biotite AtomArray merged inter residue bonds into atom_array.bonds
+    """
+    res_starts = struc.get_residue_starts(atom_array, add_exclusive_stop=True)
+    inter_bonds = _connect_inter_residue(atom_array, res_starts)
+
+    if atom_array.bonds is None:
+        atom_array.bonds = inter_bonds
+        return atom_array
+
+    select_mask = np.ones(len(inter_bonds._bonds), dtype=bool)
+    if exclude_struct_conn_pairs:
+        for b_idx, (atom_i, atom_j, b_type) in enumerate(inter_bonds._bonds):
+            atom_k = atom_i if atom_array.atom_name[atom_i] in ("N", "O3'") else atom_j
+            bonds, types = atom_array.bonds.get_bonds(atom_k)
+            if len(bonds) == 0:
+                continue
+            for b in bonds:
+                if (
+                    # adjacent residues
+                    abs((res_starts <= b).sum() - (res_starts <= atom_k).sum()) == 1
+                    and atom_array.chain_id[b] == atom_array.chain_id[atom_k]
+                    and atom_array.atom_name[b] not in ("C", "P")
+                ):
+                    select_mask[b_idx] = False
+                    break
+
+    if remove_far_inter_chain_pairs:
+        if not hasattr(atom_array, "label_asym_id"):
+            logging.warning(
+                "label_asym_id not found, far inter chain bonds will not be removed"
+            )
+        for b_idx, (atom_i, atom_j, b_type) in enumerate(inter_bonds._bonds):
+            if atom_array.label_asym_id[atom_i] != atom_array.label_asym_id[atom_j]:
+                coord_i = atom_array.coord[atom_i]
+                coord_j = atom_array.coord[atom_j]
+                if np.linalg.norm(coord_i - coord_j) > 2.5:
+                    select_mask[b_idx] = False
+
+    # filter out removed_inter_bonds from atom_array.bonds
+    remove_bonds = inter_bonds._bonds[~select_mask]
+    remove_mask = np.isin(atom_array.bonds._bonds[:, 0], remove_bonds[:, 0]) & np.isin(
+        atom_array.bonds._bonds[:, 1], remove_bonds[:, 1]
+    )
+    atom_array.bonds._bonds = atom_array.bonds._bonds[~remove_mask]
+
+    # merged normal inter_bonds into atom_array.bonds
+    inter_bonds._bonds = inter_bonds._bonds[select_mask]
+    atom_array.bonds = atom_array.bonds.merge(inter_bonds)
+    return atom_array
+
+
+def res_names_to_sequence(res_names: list[str]) -> str:
+    """convert res_names to sequences {chain_id: canonical_sequence} based on CCD
+
+    Return
+        str: canonical_sequence
+    """
+    seq = ""
+    for res_name in res_names:
+        one = get_one_letter_code(res_name)
+        one = "X" if one is None else one
+        one = "X" if len(one) > 1 else one
+        seq += one
+    return seq

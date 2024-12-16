@@ -1,12 +1,11 @@
 # Copyright 2024 ByteDance and/or its affiliates.
 #
-# Licensed under the Attribution-NonCommercial 4.0 International
-# License (the "License"); you may not use this file except in
-# compliance with the License. You may obtain a copy of the
-# License at
-
-#     https://creativecommons.org/licenses/by-nc/4.0/
-
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -186,7 +185,7 @@ class SampleDictToFeatures:
             bond_atoms = []
             for i in ["left", "right"]:
                 entity_id = int(bond_info_dict[f"{i}_entity"])
-                copy_id = bond_info_dict.get(f"{i}_copy")
+                copy_id = int(bond_info_dict.get(f"{i}_copy"))
                 position = int(bond_info_dict[f"{i}_position"])
                 atom_name = bond_info_dict[f"{i}_atom"]
 
@@ -250,7 +249,9 @@ class SampleDictToFeatures:
         atom_array = AddAtomArrayAnnot.add_tokatom_idx(atom_array)
         atom_array = AddAtomArrayAnnot.add_modified_res_mask(atom_array)
         atom_array = AddAtomArrayAnnot.unique_chain_and_add_ids(atom_array)
-        atom_array = AddAtomArrayAnnot.find_equiv_mol_and_assign_ids(atom_array)
+        atom_array = AddAtomArrayAnnot.find_equiv_mol_and_assign_ids(
+            atom_array, check_final_equiv=False
+        )
         atom_array = AddAtomArrayAnnot.add_ref_space_uid(atom_array)
         return atom_array
 
