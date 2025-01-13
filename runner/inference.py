@@ -23,10 +23,11 @@ from typing import Any, Mapping
 
 import torch
 import torch.distributed as dist
-
 from configs.configs_base import configs as configs_base
 from configs.configs_data import data_configs
 from configs.configs_inference import inference_configs
+from runner.dumper import DataDumper
+
 from protenix.config import parse_configs, parse_sys_args
 from protenix.data.infer_data_pipeline import get_inference_dataloader
 from protenix.model.protenix import Protenix
@@ -34,7 +35,6 @@ from protenix.utils.distributed import DIST_WRAPPER
 from protenix.utils.seed import seed_everything
 from protenix.utils.torch_utils import to_device
 from protenix.web_service.dependency_url import URL
-from runner.dumper import DataDumper
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,10 @@ class InferenceRunner(object):
         self.init_basics()
         self.init_model()
         self.load_checkpoint()
-        self.init_dumper(need_atom_confidence=configs.need_atom_confidence)
+        self.init_dumper(
+            need_atom_confidence=configs.need_atom_confidence,
+            sorted_by_ranking_score=configs.sorted_by_ranking_score,
+        )
 
     def init_env(self) -> None:
         self.print(
@@ -72,7 +75,7 @@ class InferenceRunner(object):
             self.print(f"env: {env}")
             assert (
                 env is not None
-            ), "if use ds4sci, set env as https://www.deepspeed.ai/tutorials/ds4sci_evoformerattention/"
+            ), "if use ds4sci, set `CUTLASS_PATH` env as https://www.deepspeed.ai/tutorials/ds4sci_evoformerattention/"
             if env is not None:
                 logging.info(
                     "The kernels will be compiled when DS4Sci_EvoformerAttention is called for the first time."
@@ -111,14 +114,18 @@ class InferenceRunner(object):
             }
         self.model.load_state_dict(
             state_dict=checkpoint["model"],
-            strict=True,
+            strict=self.configs.load_strict,
         )
         self.model.eval()
         self.print(f"Finish loading checkpoint.")
 
-    def init_dumper(self, need_atom_confidence: bool = False):
+    def init_dumper(
+        self, need_atom_confidence: bool = False, sorted_by_ranking_score: bool = True
+    ):
         self.dumper = DataDumper(
-            base_dir=self.dump_dir, need_atom_confidence=need_atom_confidence
+            base_dir=self.dump_dir,
+            need_atom_confidence=need_atom_confidence,
+            sorted_by_ranking_score=sorted_by_ranking_score,
         )
 
     # Adapted from runner.train.Trainer.evaluate
@@ -172,15 +179,25 @@ def download_infercence_cache(configs: Any, model_version: str = "v0.2.0") -> No
             urllib.request.urlretrieve(tos_url, cache_path)
 
     checkpoint_path = configs.load_checkpoint_path
-    checkpoint_path = os.path.join(
-        code_directory, f"release_data/checkpoint/model_{model_version}.pt"
-    )
 
     if not opexists(checkpoint_path):
+        checkpoint_path = os.path.join(
+            code_directory, f"release_data/checkpoint/model_{model_version}.pt"
+        )
         os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
         tos_url = URL[f"model_{model_version}"]
         logger.info(f"Downloading model checkpoint from\n {tos_url}...")
         urllib.request.urlretrieve(tos_url, checkpoint_path)
+        try:
+            ckpt = torch.load(checkpoint_path)
+            del ckpt
+        except:
+            os.remove(checkpoint_path)
+            raise RuntimeError(
+                "Download model checkpoint failed, please download by yourself with "
+                f"wget {tos_url} -O {checkpoint_path}"
+            )
+        configs.load_checkpoint_path = checkpoint_path
 
 
 def update_inference_configs(configs: Any, N_token: int):
@@ -206,7 +223,7 @@ def infer_predict(runner: InferenceRunner, configs: Any) -> None:
 
     num_data = len(dataloader.dataset)
     for seed in configs.seeds:
-        seed_everything(seed=seed, deterministic=True)
+        seed_everything(seed=seed, deterministic=configs.deterministic)
         for batch in dataloader:
             try:
                 data, atom_array, data_error_message = batch[0]
@@ -285,14 +302,6 @@ def run() -> None:
     )
     download_infercence_cache(configs, model_version="v0.2.0")
     main(configs)
-
-
-def run_default() -> None:
-    inference_configs["load_checkpoint_path"] = "/af3-dev/release_model/model_v0.2.0.pt"
-    configs_base["model"]["N_cycle"] = 10
-    configs_base["sample_diffusion"]["N_sample"] = 5
-    configs_base["sample_diffusion"]["N_step"] = 200
-    run()
 
 
 if __name__ == "__main__":

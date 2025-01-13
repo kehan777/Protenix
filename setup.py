@@ -20,7 +20,7 @@ with open("requirements.txt") as f:
 setup(
     name="protenix",
     python_requires=">=3.10",
-    version="0.3.0",
+    version="0.3.7",
     description="A trainable PyTorch reproduction of AlphaFold 3.",
     author="Bytedance Inc.",
     url="https://github.com/bytedance/Protenix",
@@ -33,7 +33,6 @@ setup(
         )
     ),
     include_package_data=True,
-    data_files=["requirements.txt"],
     package_data={
         "protenix": ["model/layer_norm/kernel/*"],
     },

@@ -2,7 +2,7 @@
 
 A trainable PyTorch reproduction of [AlphaFold 3](https://www.nature.com/articles/s41586-024-07487-w).
 
-For more information on the model's performance and capabilities, see our [technical report](Protenix_Technical_Report.pdf). 
+For more information on the model's performance and capabilities, see our technical report ([biorxiv](https://www.biorxiv.org/content/10.1101/2025.01.08.631967v1) | [pdf](Protenix_Technical_Report.pdf)). 
 
 You can follow our [twitter](https://x.com/ai4s_protenix) or join the conversation in the [discord server](https://discord.gg/8ZMWy89aMf).
 
@@ -45,6 +45,8 @@ protenix predict --input examples/example_without_msa.json --out_dir ./output --
 
 Alternatively you can run inference by:
 
+Note: by default, we do not use layernorm and EvoformerAttention kernels for simple configuration, if you want to speed up inference, see [<u> setting up kernels documentation </u>](docs/kernels.md).
+
 ```bash
 bash inference_demo.sh
 ```
@@ -57,16 +59,49 @@ Arguments in this scripts are explained as follows:
 * `use_msa`: whether to use the MSA feature, the default is true.
 
 
-Note: by default, we do not use layernorm and EvoformerAttention kernels for simple configuration, if you want to speed up inference, see [<u> setting up kernels documentation </u>](docs/kernels.md).
+### Convert PDB/CIF file to json
 
-### Notebook demo
-You can use [notebooks/protenix_inference.ipynb](notebooks/protenix_inference.ipynb)  to run the model inference.
+If your input is pdb or cif file, you can convert it to json file for inference.
+```bash
+# run with pdb/cif file, and convert it to json file for inference.
+protenix tojson --input examples/7pzb.pdb --out_dir ./output
+```
+
+
+### MSA search
+We also provide an independent MSA search function, you can do msa search from json file or fasta file.
+```bash
+# run msa search with json file, it will write precomputed msa dir info to a new json file.
+protenix msa --input examples/example_without_msa.json --out_dir ./output
+
+# run msa search with fasta file which only contains protein.
+protenix msa --input examples/prot.fasta --out_dir ./output
+```
+
+### Run with PyMol
+
+If you want to run Protenix inference with `PyMol`, please refer to [PyMOLfold](https://github.com/colbyford/PyMOLfold).
 
 ## Training
 If you're interested in model training, see [<u> training documentation </u>](docs/training.md).
 
 ## Performance
 See the [<u>performance documentation</u>](docs/model_performance.md) for memory and time consumption in training and inference.
+
+## Citing This Work
+
+If you use this code or the model in your research, please cite the following paper:
+
+```
+@article{chen2025protenix,
+  title={Protenix - Advancing Structure Prediction Through a Comprehensive AlphaFold3 Reproduction},
+  author={Chen, Xinshi and Zhang, Yuxuan and Lu, Chan and Ma, Wenzhi and Guan, Jiaqi and Gong, Chengyue and Yang, Jincai and Zhang, Hanyu and Zhang, Ke and Wu, Shenghao and Zhou, Kuangqi and Yang, Yanping and Liu, Zhenyu and Wang, Lan and Shi, Bo and Shi, Shaochen and Xiao, Wenzhi},
+  year={2025},
+  doi = {10.1101/2025.01.08.631967},
+  journal = {bioRxiv}
+}
+```
+
 
 ## Acknowledgements
 

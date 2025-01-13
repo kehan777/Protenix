@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 import copy
 import os
 import re
@@ -39,6 +40,23 @@ def remove_numbers(s: str) -> str:
         str: a string with numbers removed.
     """
     return re.sub(r"\d+", "", s)
+
+
+def int_to_letters(n: int) -> str:
+    """
+    Convert int to letters.
+    Useful for converting chain index to label_asym_id.
+
+    Args:
+        n (int): int number
+    Returns:
+        str: letters. e.g. 1 -> A, 2 -> B, 27 -> AA, 28 -> AB
+    """
+    result = ""
+    while n > 0:
+        n, remainder = divmod(n - 1, 26)
+        result = chr(65 + remainder) + result
+    return result
 
 
 def get_starts_by(
@@ -545,10 +563,49 @@ def pdb_to_cif(input_fname: str, output_fname: str, entry_id: str = None):
     seq_to_entity_id = {}
     cnt = 0
     chain_starts = struc.get_chain_starts(atom_array, add_exclusive_stop=True)
+
+    # split chains by hetero
+    new_chain_starts = []
+    for c_start, c_stop in zip(chain_starts[:-1], chain_starts[1:]):
+        new_chain_starts.append(c_start)
+        chain_start_hetero = atom_array.hetero[c_start]
+        hetero_diff = np.where(atom_array.hetero[c_start:c_stop] != chain_start_hetero)
+        if hetero_diff[0].shape[0] > 0:
+            new_chain_start = c_start + hetero_diff[0][0]
+            new_chain_starts.append(new_chain_start)
+
+    new_chain_starts += [chain_starts[-1]]
+
+    # # split HETATM chains by res id
+    new_chain_starts2 = []
+    for c_start, c_stop in zip(new_chain_starts[:-1], new_chain_starts[1:]):
+        new_chain_starts2.append(c_start)
+        res_id_diff = np.diff(atom_array.res_id[c_start:c_stop])
+        uncont_res_starts = np.where(res_id_diff >= 1)
+
+        if uncont_res_starts[0].shape[0] > 0:
+            for res_start_atom_idx in uncont_res_starts[0]:
+                new_chain_start = c_start + res_start_atom_idx + 1
+                # atom_array.hetero is True if "HETATM"
+                if (
+                    atom_array.hetero[new_chain_start]
+                    and atom_array.hetero[new_chain_start - 1]
+                ):
+                    new_chain_starts2.append(new_chain_start)
+
+    chain_starts = new_chain_starts2 + [chain_starts[-1]]
+
     label_entity_id = np.zeros(len(atom_array), dtype=np.int32)
     atom_index = np.arange(len(atom_array), dtype=np.int32)
     res_id = copy.deepcopy(atom_array.res_id)
+
+    chain_id = copy.deepcopy(atom_array.chain_id)
+    chain_count = 0
     for c_start, c_stop in zip(chain_starts[:-1], chain_starts[1:]):
+        chain_count += 1
+        new_chain_id = int_to_letters(chain_count)
+        chain_id[c_start:c_stop] = new_chain_id
+
         chain_array = atom_array[c_start:c_stop]
         residue_starts = struc.get_residue_starts(chain_array, add_exclusive_stop=True)
         resname_seq = [name for name in chain_array[residue_starts[:-1]].res_name]
@@ -602,8 +659,11 @@ def pdb_to_cif(input_fname: str, output_fname: str, entry_id: str = None):
 
     # add label atom id
     atom_array.set_annotation("label_atom_id", atom_array.atom_name)
+
     # add label asym id
+    atom_array.chain_id = chain_id  # reset chain_id
     atom_array.set_annotation("label_asym_id", atom_array.chain_id)
+
     # add label seq id
     atom_array.res_id = res_id  # reset res_id
     atom_array.set_annotation("label_seq_id", atom_array.res_id)
@@ -614,3 +674,11 @@ def pdb_to_cif(input_fname: str, output_fname: str, entry_id: str = None):
         entry_id=entry_id or os.path.basename(output_fname),
         include_bonds=True,
     )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--pdb_file", type=str, required=True, help="The pdb file to parse")
+    parser.add_argument("--cif_file", type=str, required=True, help="The cif file path to generate")
+    args = parser.parse_args()
+    pdb_to_cif(args.pdb_file, args.cif_file)
