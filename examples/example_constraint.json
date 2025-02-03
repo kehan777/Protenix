@@ -1,0 +1,59 @@
+[
+  {
+    "sequences": [
+      {
+        "proteinChain": {
+          "sequence": "EVMLVESGGGLVKPGGSLKLSCAASGFTFSNYAMSWVRQTPEKRLEWVAAISGNEGTYTYYPDSVRGRFTISRDNARNNLYLQISSLRSEDTALYYCARYGLVGALDFWGQGASVTVSSASTKGPSVFPLAPSSKSTSGGTAALGCLVKDYFPEPVTVSWNSGALTSGVHTFPAVLQSSGLYSLSSVVTVPSSSLGTQTYICNVNHKPSNTKVDKRVEPKSCDKTHHHHHH",
+          "count": 1,
+           "msa":{
+            "search_tool": "jackhmmer",
+            "pairing_db": "uniprot",
+            "pairing_db_fpath": "/mnt/e/DMFold/database/uniprot/uniprot.fasta",
+            "non_pairing_db_fpath": "/mnt/e/DMFold/database/mgnify/mgy_clusters_2022_05.fa",
+            "msa_save_dir": "./searched_msa"
+          }
+        }
+      },
+      {
+        "proteinChain": {
+          "sequence": "DIQMNQSPSTLSASLGDTITITCRASQNIDVWLNWYQQKPGDIPKLLIYEASNLHTGVPSRFSGSGSGTDFTLAISSLQPEDIATYYCLQGQDYPFTFGSGTKLEIKRTVAAPSVFIFPPSDEQLKSGTASVVCLLNNFYPREAKVQWKVDNALQSGNSQESVTEQDSKDSTYSLSSTLTLSKADYEKHKVYACEVTHQGLSSPVTKSFNRGEC",
+          "count": 1,
+           "msa":{
+            "search_tool": "jackhmmer",
+            "pairing_db": "uniprot",
+            "pairing_db_fpath": "/mnt/e/DMFold/database/uniprot/uniprot.fasta",
+            "non_pairing_db_fpath": "/mnt/e/DMFold/database/mgnify/mgy_clusters_2022_05.fa",
+            "msa_save_dir": "./searched_msa"
+          }
+        }
+      },
+      {
+        "proteinChain": {
+          "sequence": "ESSVSLTVPPVVKLENGSSTNVSLTLRPPLNATLVITFEITFRSKNITILELPDEVVVPPGVTNSSFQVTSQNVGQLTVYLHGNHSNQTGPRIRFLVIRSSAISIINQVIGWIYFVAWSISFYPQVIMNWRRKSVIGLSFDFVALNLTGFVAYSVFNIGLLWVPYIKEQFLLKYPNGVNPVNSNDVFFSLHAVVLTLIIIVQCCLYERGGQRVSWPAIGFLVLAWLFAFVTMIVAAVGVITWLQFLFCFSYIKLAVTLVKYFPQAYMKFYYKSTEGWSIGNVLLDFTGGSFSLLQMFLQSYNNDQWTLIFGDPTKFGLGVFSIVFDVVFFIQHFCLYRKRPGLQAARTGSGSRLRQDWAPSLQPKALPQTTSVSASSLKGDYKDDDDK",
+          "count": 1,
+           "msa":{
+            "search_tool": "jackhmmer",
+            "pairing_db": "uniprot",
+            "pairing_db_fpath": "/mnt/e/DMFold/database/uniprot/uniprot.fasta",
+            "non_pairing_db_fpath": "/mnt/e/DMFold/database/mgnify/mgy_clusters_2022_05.fa",
+            "msa_save_dir": "./searched_msa"
+          }        }
+      }
+    ],
+    "modelSeeds": [],
+    "name": "8dkw_contact",
+    "constraint": {
+      "contact": [
+        {
+          "entity1": 2,
+          "copy1": 1,
+          "position1": 96,
+          "entity2": 3,
+          "copy2": 1,
+          "position2": 28,
+          "max_distance": 15
+        }
+      ]
+    }
+  }
+]
